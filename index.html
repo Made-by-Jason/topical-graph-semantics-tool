@@ -5,27 +5,21 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>Topical Semantic Network — Standalone HTML</title>
-	<!-- Tailwind (CDN) -->
 	<script src="https://cdn.tailwindcss.com"></script>
-	<!-- Cytoscape.js (graph rendering) -->
 	<script src="https://unpkg.com/cytoscape@3.28.0/dist/cytoscape.min.js"></script>
-	<!-- JSZip + FileSaver for ZIP downloads -->
 	<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-	<!-- docx for .docx creation in-browser -->
 	<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
-	<!-- Google Identity Services (optional; uncomment to enable Drive upload)
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  -->
 	<style>
 		html,
 		body {
 			height: 100%;
 		}
 
+		/* The main #cy container is now sized correctly within its flex/grid parent,
+		   but this ensures a minimum height in different contexts if needed. */
 		#cy {
-			width: 100%;
-			height: 75vh;
+			min-height: 65vh;
 			border-radius: 0.75rem;
 		}
 
@@ -41,83 +35,25 @@
 		<p class="text-sm text-gray-600 mt-1">Paste titles and descriptions, build a semantic network (embeddings or TF‑IDF), edit nodes, and export to Google Docs (.docx) or ZIP.</p>
 
 		<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-			<!-- Left: inputs -->
 			<section class="bg-white rounded-2xl shadow p-4 space-y-4">
 				<div>
 					<label class="block text-sm font-medium">Titles & Descriptions</label>
 					<textarea id="inputText" class="w-full h-56 mt-2 p-3 border rounded-lg mono" placeholder="One per line:\nTitle | Description\nExample:\nLocal SEO Checklist | Step-by-step actions to improve local visibility and conversions"></textarea>
-					<div class="flex gap-2 mt-3">
-						<button id="parseBtn" class="px-3 py-2 rounded-xl text-white bg-sky-600">Parse</button>
-						<button id="buildBtn" class="px-3 py-2 rounded-xl text-white bg-green-600">Build Graph</button>
-						<button id="recomputeBtn" class="px-3 py-2 rounded-xl text-white bg-indigo-600">Recompute Links</button>
-						<button id="clearBtn" class="px-3 py-2 rounded-xl text-white bg-gray-600">Clear</button>
+					<div class="flex flex-wrap gap-2 mt-3">
+						<button id="parseBtn" class="px-3 py-2 rounded-xl text-white bg-sky-600 hover:bg-sky-700">Parse</button>
+						<button id="buildBtn" class="px-3 py-2 rounded-xl text-white bg-green-600 hover:bg-green-700">Build Graph</button>
+						<button id="recomputeBtn" class="px-3 py-2 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700">Recompute Links</button>
+						<button id="clearBtn" class="px-3 py-2 rounded-xl text-white bg-gray-600 hover:bg-gray-700">Clear</button>
+						<button id="exportPngBtn" class="px-3 py-2 rounded-xl text-white bg-teal-600 hover:bg-teal-700">Export PNG</button>
+						<button id="exportSvgBtn" class="px-3 py-2 rounded-xl text-white bg-teal-600 hover:bg-teal-700">Export SVG</button>
 					</div>
-					<div style="margin-bottom: 10px;">
-  <button id="exportPngBtn">Export PNG</button>
-  <button id="exportSvgBtn">Export SVG</button>
-</div>
-<div id="cy" style="width: 100%; height: 600px; border: 1px solid #ccc;"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.24.0/cytoscape.min.js"></script>
-<script>
-  // Initialize cytoscape (replace elements with your data)
-  const cy = cytoscape({
-    container: document.getElementById('cy'),
-    elements: [], // your nodes and edges
-    style: [
-      {
-        selector: 'node',
-        style: {
-          'background-color': '#1E90FF',
-          'label': 'data(label)',
-          'text-valign': 'center',
-          'color': '#fff',
-          'font-size': 12,
-          'text-outline-width': 2,
-          'text-outline-color': '#1E90FF'
-        }
-      },
-      {
-        selector: 'edge',
-        style: {
-          'width': 2,
-          'line-color': '#ccc',
-          'target-arrow-color': '#ccc',
-          'target-arrow-shape': 'triangle'
-        }
-      }
-    ],
-    layout: { name: 'cose' }
-  });
-
-  // Export PNG
-  document.getElementById('exportPngBtn').addEventListener('click', () => {
-    const png64 = cy.png({ full: true, scale: 2 });
-    const a = document.createElement('a');
-    a.href = png64;
-    a.download = 'semantic_network.png';
-    a.click();
-  });
-
-  // Export SVG
-  document.getElementById('exportSvgBtn').addEventListener('click', () => {
-    const svgContent = cy.svg({ full: true, scale: 2 });
-    const blob = new Blob([svgContent], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'semantic_network.svg';
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-</script>
 				</div>
 
 				<div class="grid grid-cols-2 gap-3">
 					<div>
 						<label class="block text-sm font-medium">OpenAI API Key (optional)</label>
 						<input id="openaiKey" type="password" class="w-full mt-1 p-2 border rounded-lg" placeholder="sk-..." />
-						<p class="text-xs text-gray-500 mt-1">Used only in-browser for embeddings. For production, compute embeddings server-side.</p>
+						<p class="text-xs text-gray-500 mt-1">Used only in-browser for embeddings.</p>
 					</div>
 					<div>
 						<label class="block text-sm font-medium">Embedding model</label>
@@ -125,14 +61,14 @@
 							<option value="text-embedding-3-small">text-embedding-3-small</option>
 							<option value="text-embedding-3-large">text-embedding-3-large</option>
 						</select>
-						<p class="text-xs text-gray-500 mt-1">If no key is provided, TF‑IDF fallback is used.</p>
+						<p class="text-xs text-gray-500 mt-1">If no key, TF‑IDF is used.</p>
 					</div>
 				</div>
 
 				<div class="border-t pt-4">
 					<div class="flex flex-wrap gap-2">
-						<button id="exportZipBtn" class="px-3 py-2 rounded-xl text-white bg-amber-600">Export Selected → ZIP (.docx)</button>
-						<button id="exportAllZipBtn" class="px-3 py-2 rounded-xl text-white bg-amber-700">Export All → ZIP (.docx)</button>
+						<button id="exportZipBtn" class="px-3 py-2 rounded-xl text-white bg-amber-600 hover:bg-amber-700">Export Selected → ZIP</button>
+						<button id="exportAllZipBtn" class="px-3 py-2 rounded-xl text-white bg-amber-700 hover:bg-amber-800">Export All → ZIP</button>
 					</div>
 				</div>
 
@@ -141,23 +77,21 @@
 					<p class="text-xs text-gray-500">Uncomment the Google script in the &lt;head&gt; and set your Client ID below.</p>
 					<input id="googleClientId" class="w-full mt-1 p-2 border rounded-lg" placeholder="YOUR_GOOGLE_CLIENT_ID" />
 					<div class="flex gap-2 mt-2">
-						<button id="connectDriveBtn" class="px-3 py-2 rounded-xl text-white bg-blue-600">Connect Drive</button>
-						<button id="uploadSelectedBtn" class="px-3 py-2 rounded-xl text-white bg-blue-500">Upload Selected</button>
+						<button id="connectDriveBtn" class="px-3 py-2 rounded-xl text-white bg-blue-600 hover:bg-blue-700">Connect Drive</button>
+						<button id="uploadSelectedBtn" class="px-3 py-2 rounded-xl text-white bg-blue-500 hover:bg-blue-600">Upload Selected</button>
 					</div>
 				</div>
 			</section>
 
-			<!-- Middle: graph -->
-			<section class="lg:col-span-2 bg-white rounded-2xl shadow p-4">
+			<section class="lg:col-span-2 bg-white rounded-2xl shadow p-4 flex flex-col">
 				<div class="flex justify-between items-center mb-2">
 					<div class="text-sm text-gray-600">Nodes: <span id="nodeCount">0</span> · Edges: <span id="edgeCount">0</span> · Mode: <span id="modeTag">TF‑IDF</span></div>
 					<div class="text-xs text-gray-500">Tip: Shift+drag to pan · Scroll to zoom · Click a node to edit</div>
 				</div>
-				<div id="cy" class="bg-gray-50"></div>
+				<div id="cy" class="bg-gray-50 flex-grow w-full"></div>
 			</section>
 		</div>
 
-		<!-- Node editor / details -->
 		<section class="mt-6 bg-white rounded-2xl shadow p-4">
 			<h3 class="text-lg font-semibold">Node Editor</h3>
 			<p class="text-xs text-gray-500">Select a node in the graph to load it here.</p>
@@ -184,12 +118,11 @@
 				</div>
 			</div>
 			<div class="flex gap-2 mt-3">
-				<button id="saveNodeBtn" class="px-3 py-2 rounded-xl text-white bg-emerald-600">Save Node</button>
-				<button id="deleteNodeBtn" class="px-3 py-2 rounded-xl text-white bg-rose-600">Delete Node</button>
+				<button id="saveNodeBtn" class="px-3 py-2 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700">Save Node</button>
+				<button id="deleteNodeBtn" class="px-3 py-2 rounded-xl text-white bg-rose-600 hover:bg-rose-700">Delete Node</button>
 			</div>
 		</section>
 	</div>
-
 
 	<script>
 		// --------------------------- State ---------------------------
@@ -201,16 +134,23 @@
 		};
 		let cy = null;
 		let driveToken = null;
-		const q = (sel) => document.querySelector(sel);
 		const qi = (id) => document.getElementById(id);
+
 		// --------------------- Utilities / NLP -----------------------
 		const normalize = (s = '') => s.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
 		const tokenize = (s = '') => normalize(s).split(' ').filter(Boolean);
 		const cosine = (a, b) => {
 			if (!a || !b || a.length !== b.length) return 0;
 			let s = 0;
-			for (let i = 0; i < a.length; i++) s += a[i] * b[i];
-			return s;
+			let normA = 0;
+			let normB = 0;
+			for (let i = 0; i < a.length; i++) {
+				s += a[i] * b[i];
+				normA += a[i] * a[i];
+				normB += b[i] * b[i];
+			}
+			const denom = Math.sqrt(normA) * Math.sqrt(normB);
+			return denom === 0 ? 0 : s / denom;
 		};
 		const buildVocab = (docsTokens) => {
 			const map = new Map();
@@ -243,29 +183,37 @@
 			};
 		};
 		async function fetchEmbeddings(texts, apiKey, model) {
-			if (!apiKey) return null; // caller handles fallback
-			const res = await fetch('https://api.openai.com/v1/embeddings', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': 'Bearer ' + apiKey
-				},
-				body: JSON.stringify({
-					input: texts,
-					model
-				})
-			});
-			if (!res.ok) {
-				console.warn('Embedding request failed', await res.text());
+			if (!apiKey) return null;
+			try {
+				const res = await fetch('https://api.openai.com/v1/embeddings', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': 'Bearer ' + apiKey
+					},
+					body: JSON.stringify({
+						input: texts,
+						model
+					})
+				});
+				if (!res.ok) {
+					const error = await res.json();
+					alert(`Embedding request failed: ${error.error.message}`);
+					return null;
+				}
+				const j = await res.json();
+				return (j.data || []).map(d => d.embedding);
+			} catch (e) {
+				alert(`Network error during embedding request: ${e.message}`);
 				return null;
 			}
-			const j = await res.json();
-			return (j.data || []).map(d => d.embedding);
 		}
+
 		// ----------------------- Graph logic ------------------------
 		function rebuildEdges() {
 			const vectors = DATA.vectors;
 			const nodes = DATA.nodes;
+			if (!vectors || vectors.length === 0) return;
 			const edges = [];
 			for (let i = 0; i < nodes.length; i++) {
 				let best = -1,
@@ -289,67 +237,71 @@
 		}
 
 		function renderGraph() {
-			const elements = [];
-			for (const n of DATA.nodes) {
-				elements.push({
+			const elements = [
+				...DATA.nodes.map(n => ({
 					data: {
 						id: n.id,
 						label: n.title
 					}
-				});
-			}
-			for (const e of DATA.edges) {
-				elements.push({
+				})),
+				...DATA.edges.map(e => ({
 					data: {
 						id: `${e.source}->${e.target}`,
 						source: e.source,
 						target: e.target,
 						label: e.label
 					}
-				});
-			}
+				}))
+			];
+
 			if (!cy) {
 				cy = cytoscape({
 					container: document.getElementById('cy'),
 					elements,
 					style: [{
-							selector: 'node',
-							style: {
-								'background-color': '#1d4ed8',
-								'label': 'data(label)',
-								'color': '#111827',
-								'font-size': '10px',
-								'text-valign': 'center',
-								'text-halign': 'center',
-								'text-wrap': 'wrap',
-								'text-max-width': '160px'
-							}
-						},
-						{
-							selector: 'edge',
-							style: {
-								'width': 1.5,
-								'line-color': '#94a3b8',
-								'curve-style': 'bezier',
-								'target-arrow-shape': 'triangle',
-								'target-arrow-color': '#94a3b8',
-								'label': 'data(label)',
-								'font-size': '8px',
-								'text-rotation': 'autorotate',
-								'color': '#6b7280'
-							}
-						},
-						{
-							selector: 'node:selected',
-							style: {
-								'background-color': '#10b981'
-							}
-						},
-					],
+    selector: 'node',
+    style: {
+        'background-color': '#1d4ed8',
+        'label': 'data(label)',
+        'color': '#ffffff', // <-- Make text white for contrast
+        'font-size': '12px',
+        'text-valign': 'center',
+        'text-halign': 'center',
+
+        // --- Key changes for legibility ---
+        'shape': 'round-rectangle', // Better for varying text lengths
+        'width': 'label',          // Auto-size width to fit the label
+        'height': 'label',         // Auto-size height to fit the label
+        'padding': '12px',         // Add breathing room around the text
+    }
+,
+					}, {
+						selector: 'edge',
+						style: {
+							'width': 1.5,
+							'line-color': '#94a3b8',
+							'curve-style': 'bezier',
+							'target-arrow-shape': 'triangle',
+							'target-arrow-color': '#94a3b8',
+							'label': 'data(label)',
+							'font-size': '8px',
+							'text-rotation': 'autorotate',
+							'color': '#6b7280'
+						}
+					}, {
+						selector: 'node:selected',
+						style: {
+							'background-color': '#10b981',
+							'border-width': 2,
+							'border-color': '#059669'
+						}
+					}, ],
 					layout: {
 						name: 'cose',
-						animate: true
+						animate: true,
+						padding: 30
 					}
+					
 				});
 				cy.on('tap', 'node', (evt) => {
 					const id = evt.target.id();
@@ -361,11 +313,14 @@
 				cy.add(elements);
 				cy.layout({
 					name: 'cose',
-					animate: true
+					animate: true,
+					padding: 30
 				}).run();
 			}
 			qi('nodeCount').textContent = String(DATA.nodes.length);
+			qi('edgeCount').textContent = String(DATA.edges.length);
 		}
+
 
 		function loadNodeIntoEditor(id) {
 			const n = DATA.nodes.find(x => x.id === id);
@@ -391,21 +346,32 @@
 				tertiaryKeywords: qi('editTertiary').value.split(',').map(s => s.trim()).filter(Boolean),
 			};
 			DATA.nodes[idx] = updated;
-			// Also update label in graph
-			const nodeEle = cy.$(`#${id}`);
+			const nodeEle = cy.$id(id);
 			if (nodeEle) nodeEle.data('label', updated.title);
 		}
 
 		function deleteCurrentNode() {
 			const id = DATA.selectedId;
 			if (!id) return;
-			DATA.nodes = DATA.nodes.filter(n => n.id !== id);
-			DATA.vectors = DATA.vectors.filter((_, i) => DATA.nodes[i]); // keep aligned by rebuild below
+			const nodeIndex = DATA.nodes.findIndex(n => n.id === id);
+			if (nodeIndex === -1) return;
+
+			DATA.nodes.splice(nodeIndex, 1);
+			DATA.vectors.splice(nodeIndex, 1); // Remove corresponding vector
 			DATA.selectedId = null;
-			// Recompute to keep indices consistent
-			computeVectorsAndEdges();
+
+			// Clear editor
+			['editTitle', 'editEntity', 'editDesc', 'editRelated', 'editTertiary'].forEach(id => qi(id).value = '');
+
+			rebuildEdges(); // Rebuild edges based on remaining nodes
+			renderGraph(); // Re-render the graph
 		}
+
 		async function computeVectorsAndEdges() {
+			if (DATA.nodes.length === 0) {
+				alert("Please parse some data first.");
+				return;
+			}
 			const texts = DATA.nodes.map(n => `${n.title}\n${n.description}`);
 			const apiKey = qi('openaiKey').value.trim();
 			const model = qi('embedModel').value;
@@ -424,6 +390,7 @@
 			rebuildEdges();
 			renderGraph();
 		}
+
 		// ------------------------ Exports ---------------------------
 		async function makeDocxBlobForNode(n) {
 			const {
@@ -434,7 +401,6 @@
 			} = window.docx;
 			const doc = new Document({
 				sections: [{
-					properties: {},
 					children: [
 						new Paragraph({
 							text: n.title || '',
@@ -460,9 +426,9 @@
 			});
 			return await Packer.toBlob(doc);
 		}
-		async function exportNodesAsZip(selectedIds) {
+		async function exportNodesAsZip(nodeIds) {
 			const zip = new JSZip();
-			const items = DATA.nodes.filter(n => selectedIds.includes(n.id));
+			const items = DATA.nodes.filter(n => nodeIds.includes(n.id));
 			for (const n of items) {
 				const blob = await makeDocxBlobForNode(n);
 				const fname = (n.title || 'node').replace(/[^a-z0-9]/gi, '_').slice(0, 80) + '.docx';
@@ -473,6 +439,7 @@
 			});
 			saveAs(content, 'topical-nodes.zip');
 		}
+
 		// -------------------- Google Drive Upload -------------------
 		function initDriveTokenClient() {
 			const clientId = qi('googleClientId').value.trim();
@@ -508,7 +475,7 @@
 				type: 'application/json'
 			}));
 			form.append('file', blob, 'node.docx');
-			const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&convert=true', {
+			const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
 				method: 'POST',
 				headers: {
 					Authorization: 'Bearer ' + driveToken
@@ -529,6 +496,7 @@
 			}
 			alert('Drive upload complete (check console for details).');
 		}
+
 		// ------------------------- UI Hooks -------------------------
 		qi('parseBtn').onclick = () => {
 			const lines = qi('inputText').value.split('\n').map(l => l.trim()).filter(Boolean);
@@ -543,7 +511,7 @@
 					tertiary
 				} = extractKeywords(title, desc);
 				return {
-					id: crypto.randomUUID(),
+					id: `node-${Math.random().toString(36).substr(2, 9)}`,
 					title,
 					description: desc,
 					mainKeyword: entity,
@@ -553,8 +521,9 @@
 			});
 			DATA.nodes = parsed;
 			qi('nodeCount').textContent = String(parsed.length);
-			renderGraph();
+			renderGraph(); // Render nodes without edges initially
 		};
+
 		qi('buildBtn').onclick = computeVectorsAndEdges;
 		qi('recomputeBtn').onclick = () => {
 			rebuildEdges();
@@ -572,13 +541,12 @@
 			}
 			qi('nodeCount').textContent = '0';
 			qi('edgeCount').textContent = '0';
+			qi('inputText').value = '';
 		};
-		qi('saveNodeBtn').onclick = () => {
-			saveCurrentNodeEdits();
-		};
-		qi('deleteNodeBtn').onclick = () => {
-			deleteCurrentNode();
-		};
+
+		qi('saveNodeBtn').onclick = saveCurrentNodeEdits;
+		qi('deleteNodeBtn').onclick = deleteCurrentNode;
+
 		qi('exportZipBtn').onclick = async () => {
 			const selected = cy ? cy.$('node:selected').map(n => n.id()) : [];
 			if (!selected.length) {
@@ -588,553 +556,48 @@
 			await exportNodesAsZip(selected);
 		};
 		qi('exportAllZipBtn').onclick = async () => {
+			if (DATA.nodes.length === 0) {
+				alert('No nodes to export.');
+				return;
+			}
 			await exportNodesAsZip(DATA.nodes.map(n => n.id));
 		};
-		qi('connectDriveBtn').onclick = () => initDriveTokenClient();
-		qi('uploadSelectedBtn').onclick = async () => {
-			const selected = cy ? cy.$('node:selected').map(n => n.id()) : [];
-			if (!selected.length) {
-				alert('Select at least one node.');
+
+		// --- NEWLY ADDED ---
+		qi('exportPngBtn').onclick = () => {
+			if (!cy || DATA.nodes.length === 0) {
+				alert('Please build a graph first.');
 				return;
 			}
-			await uploadSelectedToDrive(selected);
-		};
-	</script>
-</body>
-
-</html><!DOCTYPE html>
-<html lang="en">
-
-<head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Topical Semantic Network — Standalone HTML</title>
-	<!-- Tailwind (CDN) -->
-	<script src="https://cdn.tailwindcss.com"></script>
-	<!-- Cytoscape.js (graph rendering) -->
-	<script src="https://unpkg.com/cytoscape@3.28.0/dist/cytoscape.min.js"></script>
-	<!-- JSZip + FileSaver for ZIP downloads -->
-	<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-	<!-- docx for .docx creation in-browser -->
-	<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
-	<!-- Google Identity Services (optional; uncomment to enable Drive upload)
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  -->
-	<style>
-		html,
-		body {
-			height: 100%;
-		}
-
-		#cy {
-			width: 100%;
-			height: 75vh;
-			border-radius: 0.75rem;
-		}
-
-		.mono {
-			font-feature-settings: 'ss01'on;
-		}
-	</style>
-</head>
-
-<body class="bg-gray-50 min-h-screen">
-	<div class="max-w-7xl mx-auto p-6">
-		<h1 class="text-2xl font-semibold">Topical Semantic Network (Standalone)</h1>
-		<p class="text-sm text-gray-600 mt-1">Paste titles and descriptions, build a semantic network (embeddings or TF‑IDF), edit nodes, and export to Google Docs (.docx) or ZIP.</p>
-
-		<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-			<!-- Left: inputs -->
-			<section class="bg-white rounded-2xl shadow p-4 space-y-4">
-				<div>
-					<label class="block text-sm font-medium">Titles & Descriptions</label>
-					<textarea id="inputText" class="w-full h-56 mt-2 p-3 border rounded-lg mono" placeholder="One per line:\nTitle | Description\nExample:\nLocal SEO Checklist | Step-by-step actions to improve local visibility and conversions"></textarea>
-					<div class="flex gap-2 mt-3">
-						<button id="parseBtn" class="px-3 py-2 rounded-xl text-white bg-sky-600">Parse</button>
-						<button id="buildBtn" class="px-3 py-2 rounded-xl text-white bg-green-600">Build Graph</button>
-						<button id="recomputeBtn" class="px-3 py-2 rounded-xl text-white bg-indigo-600">Recompute Links</button>
-						<button id="clearBtn" class="px-3 py-2 rounded-xl text-white bg-gray-600">Clear</button>
-					</div>
-				</div>
-
-				<div class="grid grid-cols-2 gap-3">
-					<div>
-						<label class="block text-sm font-medium">OpenAI API Key (optional)</label>
-						<input id="openaiKey" type="password" class="w-full mt-1 p-2 border rounded-lg" placeholder="sk-..." />
-						<p class="text-xs text-gray-500 mt-1">Used only in-browser for embeddings. For production, compute embeddings server-side.</p>
-					</div>
-					<div>
-						<label class="block text-sm font-medium">Embedding model</label>
-						<select id="embedModel" class="w-full mt-1 p-2 border rounded-lg">
-							<option value="text-embedding-3-small">text-embedding-3-small</option>
-							<option value="text-embedding-3-large">text-embedding-3-large</option>
-						</select>
-						<p class="text-xs text-gray-500 mt-1">If no key is provided, TF‑IDF fallback is used.</p>
-					</div>
-				</div>
-
-				<div class="border-t pt-4">
-					<div class="flex flex-wrap gap-2">
-						<button id="exportZipBtn" class="px-3 py-2 rounded-xl text-white bg-amber-600">Export Selected → ZIP (.docx)</button>
-						<button id="exportAllZipBtn" class="px-3 py-2 rounded-xl text-white bg-amber-700">Export All → ZIP (.docx)</button>
-					</div>
-				</div>
-
-				<div class="border-t pt-4">
-					<h3 class="text-sm font-medium">Google Drive (optional)</h3>
-					<p class="text-xs text-gray-500">Uncomment the Google script in the &lt;head&gt; and set your Client ID below.</p>
-					<input id="googleClientId" class="w-full mt-1 p-2 border rounded-lg" placeholder="YOUR_GOOGLE_CLIENT_ID" />
-					<div class="flex gap-2 mt-2">
-						<button id="connectDriveBtn" class="px-3 py-2 rounded-xl text-white bg-blue-600">Connect Drive</button>
-						<button id="uploadSelectedBtn" class="px-3 py-2 rounded-xl text-white bg-blue-500">Upload Selected</button>
-					</div>
-				</div>
-			</section>
-
-			<!-- Middle: graph -->
-			<section class="lg:col-span-2 bg-white rounded-2xl shadow p-4">
-				<div class="flex justify-between items-center mb-2">
-					<div class="text-sm text-gray-600">Nodes: <span id="nodeCount">0</span> · Edges: <span id="edgeCount">0</span> · Mode: <span id="modeTag">TF‑IDF</span></div>
-					<div class="text-xs text-gray-500">Tip: Shift+drag to pan · Scroll to zoom · Click a node to edit</div>
-				</div>
-				<div id="cy" class="bg-gray-50"></div>
-			</section>
-		</div>
-
-		<!-- Node editor / details -->
-		<section class="mt-6 bg-white rounded-2xl shadow p-4">
-			<h3 class="text-lg font-semibold">Node Editor</h3>
-			<p class="text-xs text-gray-500">Select a node in the graph to load it here.</p>
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-				<div>
-					<label class="block text-sm font-medium">Title</label>
-					<input id="editTitle" class="w-full mt-1 p-2 border rounded-lg" placeholder="Title" />
-				</div>
-				<div>
-					<label class="block text-sm font-medium">Main Keyword (entity)</label>
-					<input id="editEntity" class="w-full mt-1 p-2 border rounded-lg" placeholder="entity" />
-				</div>
-				<div class="md:col-span-2">
-					<label class="block text-sm font-medium">Description</label>
-					<textarea id="editDesc" class="w-full mt-1 p-2 border rounded-lg h-28" placeholder="Description"></textarea>
-				</div>
-				<div>
-					<label class="block text-sm font-medium">Related Keywords (comma-separated)</label>
-					<input id="editRelated" class="w-full mt-1 p-2 border rounded-lg" placeholder="keyword, keyword" />
-				</div>
-				<div>
-					<label class="block text-sm font-medium">Tertiary Keywords (comma-separated)</label>
-					<input id="editTertiary" class="w-full mt-1 p-2 border rounded-lg" placeholder="keyword, keyword" />
-				</div>
-			</div>
-			<div class="flex gap-2 mt-3">
-				<button id="saveNodeBtn" class="px-3 py-2 rounded-xl text-white bg-emerald-600">Save Node</button>
-				<button id="deleteNodeBtn" class="px-3 py-2 rounded-xl text-white bg-rose-600">Delete Node</button>
-			</div>
-		</section>
-	</div>
-
-	<script>
-		// --------------------------- State ---------------------------
-		let DATA = {
-			nodes: [],
-			vectors: [],
-			edges: [],
-			selectedId: null
-		};
-		let cy = null;
-		let driveToken = null;
-		const q = (sel) => document.querySelector(sel);
-		const qi = (id) => document.getElementById(id);
-		// --------------------- Utilities / NLP -----------------------
-		const normalize = (s = '') => s.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-		const tokenize = (s = '') => normalize(s).split(' ').filter(Boolean);
-		const cosine = (a, b) => {
-			if (!a || !b || a.length !== b.length) return 0;
-			let s = 0;
-			for (let i = 0; i < a.length; i++) s += a[i] * b[i];
-			return s;
-		};
-		const buildVocab = (docsTokens) => {
-			const map = new Map();
-			docsTokens.forEach(tokens => tokens.forEach(t => {
-				if (!map.has(t)) map.set(t, map.size);
-			}));
-			return map;
-		};
-		const toTfVector = (tokens, vocab) => {
-			const vec = new Array(vocab.size).fill(0);
-			tokens.forEach(t => {
-				const idx = vocab.get(t);
-				if (idx !== undefined) vec[idx] += 1;
+			const png64 = cy.png({
+				full: true,
+				scale: 2,
+				bg: '#f9fafb'
 			});
-			const norm = Math.sqrt(vec.reduce((s, v) => s + v * v, 0)) || 1;
-			return vec.map(v => v / norm);
+			const a = document.createElement('a');
+			a.href = png64;
+			a.download = 'semantic_network.png';
+			a.click();
 		};
-		const extractKeywords = (title = '', description = '') => {
-			const toks = tokenize(title + ' ' + description).filter(t => t.length > 2);
-			const freq = {};
-			toks.forEach(t => freq[t] = (freq[t] || 0) + 1);
-			const sorted = Object.keys(freq).sort((a, b) => freq[b] - freq[a]);
-			const entity = tokenize(title)[0] || sorted[0] || '';
-			const related = sorted.filter(k => k !== entity).slice(0, 6);
-			const tertiary = sorted.filter(k => ![entity, ...related].includes(k)).slice(0, 10);
-			return {
-				entity,
-				related,
-				tertiary
-			};
-		};
-		async function fetchEmbeddings(texts, apiKey, model) {
-			if (!apiKey) return null; // caller handles fallback
-			const res = await fetch('https://api.openai.com/v1/embeddings', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': 'Bearer ' + apiKey
-				},
-				body: JSON.stringify({
-					input: texts,
-					model
-				})
-			});
-			if (!res.ok) {
-				console.warn('Embedding request failed', await res.text());
-				return null;
-			}
-			const j = await res.json();
-			return (j.data || []).map(d => d.embedding);
-		}
-		// ----------------------- Graph logic ------------------------
-		function rebuildEdges() {
-			const vectors = DATA.vectors;
-			const nodes = DATA.nodes;
-			const edges = [];
-			for (let i = 0; i < nodes.length; i++) {
-				let best = -1,
-					bestScore = -Infinity;
-				for (let j = 0; j < nodes.length; j++) {
-					if (i === j) continue;
-					const s = cosine(vectors[i], vectors[j]);
-					if (s > bestScore) {
-						bestScore = s;
-						best = j;
-					}
-				}
-				if (best >= 0) edges.push({
-					source: nodes[i].id,
-					target: nodes[best].id,
-					label: bestScore.toFixed(3)
-				});
-			}
-			DATA.edges = edges;
-			qi('edgeCount').textContent = String(edges.length);
-		}
 
-		function renderGraph() {
-			const elements = [];
-			for (const n of DATA.nodes) {
-				elements.push({
-					data: {
-						id: n.id,
-						label: n.title
-					}
-				});
-			}
-			for (const e of DATA.edges) {
-				elements.push({
-					data: {
-						id: `${e.source}->${e.target}`,
-						source: e.source,
-						target: e.target,
-						label: e.label
-					}
-				});
-			}
-			if (!cy) {
-				cy = cytoscape({
-					container: document.getElementById('cy'),
-					elements,
-					style: [{
-							selector: 'node',
-							style: {
-								'background-color': '#1d4ed8',
-								'label': 'data(label)',
-								'color': '#111827',
-								'font-size': '10px',
-								'text-valign': 'center',
-								'text-halign': 'center',
-								'text-wrap': 'wrap',
-								'text-max-width': '160px'
-							}
-						},
-						{
-							selector: 'edge',
-							style: {
-								'width': 1.5,
-								'line-color': '#94a3b8',
-								'curve-style': 'bezier',
-								'target-arrow-shape': 'triangle',
-								'target-arrow-color': '#94a3b8',
-								'label': 'data(label)',
-								'font-size': '8px',
-								'text-rotation': 'autorotate',
-								'color': '#6b7280'
-							}
-						},
-						{
-							selector: 'node:selected',
-							style: {
-								'background-color': '#10b981'
-							}
-						},
-					],
-					layout: {
-						name: 'cose',
-						animate: true
-					}
-				});
-				cy.on('tap', 'node', (evt) => {
-					const id = evt.target.id();
-					loadNodeIntoEditor(id);
-					DATA.selectedId = id;
-				});
-			} else {
-				cy.elements().remove();
-				cy.add(elements);
-				cy.layout({
-					name: 'cose',
-					animate: true
-				}).run();
-			}
-			qi('nodeCount').textContent = String(DATA.nodes.length);
-		}
-
-		function loadNodeIntoEditor(id) {
-			const n = DATA.nodes.find(x => x.id === id);
-			if (!n) return;
-			qi('editTitle').value = n.title || '';
-			qi('editEntity').value = n.mainKeyword || '';
-			qi('editDesc').value = n.description || '';
-			qi('editRelated').value = (n.relatedKeywords || []).join(', ');
-			qi('editTertiary').value = (n.tertiaryKeywords || []).join(', ');
-		}
-
-		function saveCurrentNodeEdits() {
-			const id = DATA.selectedId;
-			if (!id) return;
-			const idx = DATA.nodes.findIndex(x => x.id === id);
-			if (idx < 0) return;
-			const updated = {
-				...DATA.nodes[idx],
-				title: qi('editTitle').value.trim(),
-				mainKeyword: qi('editEntity').value.trim(),
-				description: qi('editDesc').value.trim(),
-				relatedKeywords: qi('editRelated').value.split(',').map(s => s.trim()).filter(Boolean),
-				tertiaryKeywords: qi('editTertiary').value.split(',').map(s => s.trim()).filter(Boolean),
-			};
-			DATA.nodes[idx] = updated;
-			// Also update label in graph
-			const nodeEle = cy.$(`#${id}`);
-			if (nodeEle) nodeEle.data('label', updated.title);
-		}
-
-		function deleteCurrentNode() {
-			const id = DATA.selectedId;
-			if (!id) return;
-			DATA.nodes = DATA.nodes.filter(n => n.id !== id);
-			DATA.vectors = DATA.vectors.filter((_, i) => DATA.nodes[i]); // keep aligned by rebuild below
-			DATA.selectedId = null;
-			// Recompute to keep indices consistent
-			computeVectorsAndEdges();
-		}
-		async function computeVectorsAndEdges() {
-			const texts = DATA.nodes.map(n => `${n.title}\n${n.description}`);
-			const apiKey = qi('openaiKey').value.trim();
-			const model = qi('embedModel').value;
-			let vectors = null;
-			if (apiKey) {
-				qi('modeTag').textContent = 'Embeddings';
-				vectors = await fetchEmbeddings(texts, apiKey, model);
-			}
-			if (!vectors) {
-				qi('modeTag').textContent = 'TF‑IDF';
-				const docsTokens = DATA.nodes.map(n => tokenize(n.title + ' ' + n.description));
-				const vocab = buildVocab(docsTokens);
-				vectors = docsTokens.map(toks => toTfVector(toks, vocab));
-			}
-			DATA.vectors = vectors;
-			rebuildEdges();
-			renderGraph();
-		}
-		// ------------------------ Exports ---------------------------
-		async function makeDocxBlobForNode(n) {
-			const {
-				Document,
-				Packer,
-				Paragraph,
-				HeadingLevel
-			} = window.docx;
-			const doc = new Document({
-				sections: [{
-					properties: {},
-					children: [
-						new Paragraph({
-							text: n.title || '',
-							heading: HeadingLevel.TITLE
-						}),
-						new Paragraph({
-							text: `Main Keyword: ${n.mainKeyword||''}`
-						}),
-						new Paragraph({
-							text: 'Related Keywords: ' + (n.relatedKeywords || []).join(', ')
-						}),
-						new Paragraph({
-							text: 'Tertiary Keywords: ' + (n.tertiaryKeywords || []).join(', ')
-						}),
-						new Paragraph({
-							text: ''
-						}),
-						new Paragraph({
-							text: n.description || ''
-						}),
-					],
-				}],
-			});
-			return await Packer.toBlob(doc);
-		}
-		async function exportNodesAsZip(selectedIds) {
-			const zip = new JSZip();
-			const items = DATA.nodes.filter(n => selectedIds.includes(n.id));
-			for (const n of items) {
-				const blob = await makeDocxBlobForNode(n);
-				const fname = (n.title || 'node').replace(/[^a-z0-9]/gi, '_').slice(0, 80) + '.docx';
-				zip.file(fname, blob);
-			}
-			const content = await zip.generateAsync({
-				type: 'blob'
-			});
-			saveAs(content, 'topical-nodes.zip');
-		}
-		// -------------------- Google Drive Upload -------------------
-		function initDriveTokenClient() {
-			const clientId = qi('googleClientId').value.trim();
-			if (!window.google || !window.google.accounts) {
-				alert('Google Identity script not loaded. Uncomment it in <head>.');
+		qi('exportSvgBtn').onclick = () => {
+			if (!cy || DATA.nodes.length === 0) {
+				alert('Please build a graph first.');
 				return;
 			}
-			if (!clientId) {
-				alert('Enter your Google Client ID.');
-				return;
-			}
-			const tokenClient = window.google.accounts.oauth2.initTokenClient({
-				client_id: clientId,
-				scope: 'https://www.googleapis.com/auth/drive.file',
-				callback: (resp) => {
-					if (resp && resp.access_token) driveToken = resp.access_token;
-				}
+			const svgContent = cy.svg({
+				full: true,
+				scale: 2,
+				bg: '#f9fafb'
 			});
-			tokenClient.requestAccessToken();
-		}
-		async function uploadNodeToDriveAsGoogleDoc(node) {
-			if (!driveToken) {
-				alert('Connect Drive first.');
-				return;
-			}
-			const blob = await makeDocxBlobForNode(node);
-			const metadata = {
-				name: (node.title || 'Node').slice(0, 120),
-				mimeType: 'application/vnd.google-apps.document'
-			};
-			const form = new FormData();
-			form.append('metadata', new Blob([JSON.stringify(metadata)], {
-				type: 'application/json'
-			}));
-			form.append('file', blob, 'node.docx');
-			const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&convert=true', {
-				method: 'POST',
-				headers: {
-					Authorization: 'Bearer ' + driveToken
-				},
-				body: form
+			const blob = new Blob([svgContent], {
+				type: "image/svg+xml;charset=utf-8"
 			});
-			if (!res.ok) throw new Error('Drive upload failed: ' + await res.text());
-			return await res.json();
-		}
-		async function uploadSelectedToDrive(selectedIds) {
-			const items = DATA.nodes.filter(n => selectedIds.includes(n.id));
-			for (const n of items) {
-				try {
-					await uploadNodeToDriveAsGoogleDoc(n);
-				} catch (e) {
-					console.warn(e);
-				}
-			}
-			alert('Drive upload complete (check console for details).');
-		}
-		// ------------------------- UI Hooks -------------------------
-		qi('parseBtn').onclick = () => {
-			const lines = qi('inputText').value.split('\n').map(l => l.trim()).filter(Boolean);
-			const parsed = lines.map(line => {
-				const delim = line.includes('|') ? '|' : (line.includes('\t') ? '\t' : ',');
-				const parts = line.split(delim).map(p => p.trim());
-				const title = parts[0] || '';
-				const desc = parts.slice(1).join(' ') || '';
-				const {
-					entity,
-					related,
-					tertiary
-				} = extractKeywords(title, desc);
-				return {
-					id: crypto.randomUUID(),
-					title,
-					description: desc,
-					mainKeyword: entity,
-					relatedKeywords: related,
-					tertiaryKeywords: tertiary
-				};
-			});
-			DATA.nodes = parsed;
-			qi('nodeCount').textContent = String(parsed.length);
-			renderGraph();
+			saveAs(blob, 'semantic_network.svg');
 		};
-		qi('buildBtn').onclick = computeVectorsAndEdges;
-		qi('recomputeBtn').onclick = () => {
-			rebuildEdges();
-			renderGraph();
-		};
-		qi('clearBtn').onclick = () => {
-			DATA = {
-				nodes: [],
-				vectors: [],
-				edges: [],
-				selectedId: null
-			};
-			if (cy) {
-				cy.elements().remove();
-			}
-			qi('nodeCount').textContent = '0';
-			qi('edgeCount').textContent = '0';
-		};
-		qi('saveNodeBtn').onclick = () => {
-			saveCurrentNodeEdits();
-		};
-		qi('deleteNodeBtn').onclick = () => {
-			deleteCurrentNode();
-		};
-		qi('exportZipBtn').onclick = async () => {
-			const selected = cy ? cy.$('node:selected').map(n => n.id()) : [];
-			if (!selected.length) {
-				alert('Select at least one node in the graph.');
-				return;
-			}
-			await exportNodesAsZip(selected);
-		};
-		qi('exportAllZipBtn').onclick = async () => {
-			await exportNodesAsZip(DATA.nodes.map(n => n.id));
-		};
-		qi('connectDriveBtn').onclick = () => initDriveTokenClient();
+		// --- END NEW ---
+
+		qi('connectDriveBtn').onclick = initDriveTokenClient;
 		qi('uploadSelectedBtn').onclick = async () => {
 			const selected = cy ? cy.$('node:selected').map(n => n.id()) : [];
 			if (!selected.length) {
